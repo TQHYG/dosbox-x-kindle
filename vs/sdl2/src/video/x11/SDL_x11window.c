@@ -478,7 +478,7 @@ int X11_CreateWindow(_THIS, SDL_Window *window)
     }
 
     xattr.override_redirect = ((window->flags & SDL_WINDOW_TOOLTIP) || (window->flags & SDL_WINDOW_POPUP_MENU) || force_override_redirect) ? True : False;
-    xattr.backing_store = NotUseful;
+    xattr.backing_store = WhenMapped;
     xattr.background_pixmap = None;
     xattr.border_pixel = 0;
 
