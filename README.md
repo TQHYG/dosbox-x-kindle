@@ -9,6 +9,7 @@
 - [Development/Nightly builds](https://dosbox-x.com/devel-build.html)  
 - [Install instructions](INSTALL.md)  
 - [Build instructions](BUILD.md)  
+- [Kindle cross-build instructions](README.kindle.md)  
 
 ## Table of Contents
 
