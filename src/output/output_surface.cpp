@@ -6,6 +6,7 @@
 #include "logging.h"
 #include "menudef.h"
 #include "sdlmain.h"
+#include "gui/sdl_osk.h"
 #include "render.h"
 #include "vga.h"
 
@@ -153,8 +154,14 @@ Bitu OUTPUT_SURFACE_SetSize()
 
             final_height = (int)max(max(consider_height, userResizeWindowHeight), (Bitu)(sdl.clip.y + sdl.clip.h)) - (int)menuheight - ((int)sdl.overscan_width * 2);
             final_width = (int)max(max(consider_width, userResizeWindowWidth), (Bitu)(sdl.clip.x + sdl.clip.w)) - ((int)sdl.overscan_width * 2);
+
+            /* Reserve the bottom third of the window for the on-screen
+             * keyboard; center the DOS output in the remaining area. */
+            const int kbd_h = OSK_KeyboardHeight(final_width,
+                final_height + (int)menuheight + ((int)sdl.overscan_width * 2));
+
             int ax = (final_width - (sdl.clip.x + sdl.clip.w)) / 2;
-            int ay = (final_height - (sdl.clip.y + sdl.clip.h)) / 2;
+            int ay = (final_height - kbd_h - (sdl.clip.y + sdl.clip.h)) / 2;
             if (ax < 0) ax = 0;
             if (ay < 0) ay = 0;
             sdl.clip.x += ax + (int)sdl.overscan_width;
@@ -645,6 +652,8 @@ void OUTPUT_SURFACE_EndUpdate(const uint16_t *changedLines)
 #if DOSBOXMENU_TYPE == DOSBOXMENU_SDLDRAW
     GFX_DrawSDLMenu(mainMenu, mainMenu.display_list);
 #endif
+    if (OSK_Enabled())
+        OSK_Draw(sdl.surface);
 #if C_XBRZ
     if (sdl_xbrz.enable && sdl_xbrz.scale_on)
     {

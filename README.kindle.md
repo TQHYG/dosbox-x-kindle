@@ -115,6 +115,7 @@ fullscreen = true           # 用 X 的桌面分辨率
 fullresolution = desktop
 autolock   = false
 titlebar   =                # 留空，窗口名完全由 [dosbox] title 决定
+onscreen_keyboard = true    # 屏幕底部 1/3 显示软键盘（默认 true）
 
 [dosbox]
 title = L:A_N:application_PC:T_ID:org.dosbox
@@ -125,6 +126,14 @@ title = L:A_N:application_PC:T_ID:org.dosbox
 core   = auto               # ARM 上无动态核心，写 dynamic 会被回退
 cycles = auto
 ```
+
+### 软键盘说明
+
+- 窗口被分为上下两个区域：上 2/3 为 DOS 显示区（触摸映射为鼠标），下 1/3 为 5 行软键盘。
+- 修饰键：Ctrl / Alt / Win / Fn / Caps 为**锁定式**开关（点按切换，再按取消）；Shift 为**单次**生效（按下后对下一个按键生效）。
+- **Fn**：切换第一行数字键为 F1–F12。
+- 按键与修饰键均有高亮视觉反馈；单指触控友好。
+- 关闭软键盘：`[sdl] onscreen_keyboard = false`。
 
 说明：
 - 窗口名 `L:A_N:application_...` 是 Lab126 的窗口命名约定：`L:` 表示 layer，`A` = application 层，`N:application` 表示应用程序窗口，`ID:` 是应用标识。awesome WM 据此把窗口铺满应用层区域（状态栏下方）。

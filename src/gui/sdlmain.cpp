@@ -149,6 +149,7 @@ char* revert_escape_newlines(const char* aMessage);
 #include "inout.h"
 #include "jfont.h"
 #include "render.h"
+#include "sdl_osk.h"
 #include "../dos/cdrom.h"
 #include "../dos/drives.h"
 #include "../ints/int10.h"
@@ -3722,6 +3723,8 @@ static void GUI_StartUp() {
     if (has_GUI_StartUp) return;
     has_GUI_StartUp = true;
 
+    OSK_Init();
+
     LOG(LOG_GUI,LOG_DEBUG)("Starting GUI");
 
 #if defined(C_SDL2)
@@ -4771,6 +4774,9 @@ void UpdateUserCursorScreenDimensions(void) {
 static void HandleMouseMotion(SDL_MouseMotionEvent * motion) {
     bool inputToScreen = false;
 
+    if (OSK_Enabled() && OSK_HandleMotion(motion->x, motion->y))
+        return;
+
     /* limit mouse input to whenever the cursor is on the screen, or near the edge of the screen. */
     if (is_paused)
         inputToScreen = false;
@@ -4970,6 +4976,9 @@ static void HandleMouseButton(SDL_MouseButtonEvent * button, SDL_MouseMotionEven
     bool inMenu = false;
     Section_prop * section=static_cast<Section_prop *>(control->GetSection("sdl"));
     std::string munlock;
+
+    if (OSK_Enabled() && OSK_HandleButton(button->x, button->y, button->state == SDL_PRESSED))
+        return;
 
 #if DOSBOXMENU_TYPE == DOSBOXMENU_SDLDRAW /* SDL drawn menus */
     if (GFX_GetPreventFullscreen()) {
@@ -7044,6 +7053,10 @@ void SDL_SetupConfigSection() {
     Pstring = sdl_sec->Add_string("titlebar", Property::Changeable::Always, "");
     Pstring->Set_help("Change the string displayed in the DOSBox-X title bar.");
     Pstring->SetBasic(true);
+
+    Pbool = sdl_sec->Add_bool("onscreen_keyboard", Property::Changeable::Always, true);
+    Pbool->Set_help("Show a 5-row on-screen keyboard in the bottom third of the window (for touch-screen devices such as the Kindle).");
+    Pbool->SetBasic(true);
 
     Pbool = sdl_sec->Add_bool("showbasic", Property::Changeable::Always, true);
     Pbool->Set_help("If set, DOSBox-X will show basic information including the DOSBox-X version number and current running speed in the title bar.");
