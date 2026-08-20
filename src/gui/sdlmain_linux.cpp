@@ -519,8 +519,11 @@ static bool Linux_TryXRandrGetDPI(ScreenSizeInfo &info,Display *display,Window w
 
                         std::string oname;
 
-                        if (ochk->nameLen > 0 && ochk->name != NULL)
-                            oname = std::string(ochk->name,(size_t)ochk->nameLen);
+                        /* Some X servers (e.g. the Kindle e-ink X server)
+                         * report a bogus nameLen for outputs. Blindly using it
+                         * can throw std::length_error. Bound it to a sane value. */
+                        if (ochk->name != NULL && ochk->nameLen > 0 && ochk->nameLen < 4096)
+                            oname.assign(ochk->name,(size_t)ochk->nameLen);
 
                         LOG_MSG("  Goes to output %u: name='%s' size_mm=(%lu x %lu)",
                                 o,oname.c_str(),ochk->mm_width,ochk->mm_height);

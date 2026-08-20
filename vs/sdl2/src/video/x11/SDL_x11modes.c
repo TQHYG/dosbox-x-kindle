@@ -62,6 +62,26 @@ static int get_visualinfo(Display *display, int screen, XVisualInfo *vinfo)
     }
 
     depth = DefaultDepth(display, screen);
+
+    /* Prefer higher-depth TrueColor/DirectColor visuals. Some servers (e.g.
+     * the Kindle e-ink X server) expose a low-depth default visual with
+     * unusual color masks that SDL can't map to a pixel format, even though
+     * a standard 32-bit TrueColor visual is also available. */
+    {
+        static const int depth_pref[] = { 32, 24, 16, 15 };
+        int i;
+        for (i = 0; i < SDL_arraysize(depth_pref); i++) {
+            depth = depth_pref[i];
+            if ((X11_UseDirectColorVisuals() &&
+                 X11_XMatchVisualInfo(display, screen, depth, DirectColor, vinfo)) ||
+                X11_XMatchVisualInfo(display, screen, depth, TrueColor, vinfo)) {
+                return 0;
+            }
+        }
+    }
+
+    /* Fallback: match a visual at the default depth. */
+    depth = DefaultDepth(display, screen);
     if ((X11_UseDirectColorVisuals() &&
          X11_XMatchVisualInfo(display, screen, depth, DirectColor, vinfo)) ||
         X11_XMatchVisualInfo(display, screen, depth, TrueColor, vinfo) ||

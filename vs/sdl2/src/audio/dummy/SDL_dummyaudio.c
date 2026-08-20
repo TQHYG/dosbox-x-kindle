@@ -60,7 +60,7 @@ static SDL_bool DUMMYAUDIO_Init(SDL_AudioDriverImpl *impl)
 }
 
 AudioBootStrap DUMMYAUDIO_bootstrap = {
-    "dummy", "SDL dummy audio driver", DUMMYAUDIO_Init, SDL_TRUE
+    "dummy", "SDL dummy audio driver", DUMMYAUDIO_Init, SDL_FALSE
 };
 
 #endif
