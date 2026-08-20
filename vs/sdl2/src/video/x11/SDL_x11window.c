@@ -1903,12 +1903,29 @@ int SDL_X11_SetWindowTitle(Display *display, Window xwindow, char *title)
 {
     Atom _NET_WM_NAME = X11_XInternAtom(display, "_NET_WM_NAME", False);
     XTextProperty titleprop;
-    int conv = X11_XmbTextListToTextProperty(display, &title, 1, XTextStyle, &titleprop);
+    int conv;
     Status status;
 
     if (X11_XSupportsLocale() != True) {
-        return SDL_SetError("Current locale not supported by X server, cannot continue.");
+        /* Some X servers (e.g. the Kindle e-ink X server) do not support
+         * locales. Fall back to a plain 8-bit title so window names still
+         * get set. */
+        X11_XStoreName(display, xwindow, title);
+#ifdef X_HAVE_UTF8_STRING
+        {
+            Atom UTF8_STRING = X11_XInternAtom(display, "UTF8_STRING", False);
+            if (UTF8_STRING != None) {
+                X11_XChangeProperty(display, xwindow, _NET_WM_NAME, UTF8_STRING, 8,
+                                    PropModeReplace, (const unsigned char *)title,
+                                    (int)SDL_strlen(title));
+            }
+        }
+#endif
+        X11_XFlush(display);
+        return 0;
     }
+
+    conv = X11_XmbTextListToTextProperty(display, &title, 1, XTextStyle, &titleprop);
 
     if (conv == 0) {
         X11_XSetTextProperty(display, xwindow, &titleprop, XA_WM_NAME);

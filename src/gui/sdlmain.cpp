@@ -1140,54 +1140,61 @@ void GFX_SetTitle(int32_t cycles, int frameskip, Bits timing, bool paused) {
     constexpr const char* dosbox_name = "DOSBox-X";
 #endif
 
-    bool showbasic = section->Get_bool("showbasic");
-    if (showbasic) {
-        sprintf(title, "%s%s%s %s", dosbox_title.c_str(), dosbox_title.empty() ? "" : " - ", dosbox_name, VERSION);
+    if (!dosbox_title.empty()) {
+        /* An explicit title was configured. Use it verbatim so window
+         * managers that parse the title string (e.g. the Kindle WM) see the
+         * exact configured window name. */
+        safe_strncpy(title, dosbox_title.c_str(), sizeof(title));
+    } else {
+        bool showbasic = section->Get_bool("showbasic");
+        if (showbasic) {
+            sprintf(title, "%s %s", dosbox_name, VERSION);
 
-        const char *what = RunningProgram.c_str();
-        if (!RunningProgram.empty()) {
+            const char *what = RunningProgram.c_str();
+            if (!RunningProgram.empty()) {
+                char *p = title + strlen(title); // append to end of string
+
+                sprintf(p,": %s - ", what);
+            }
+
+            char *p = title + strlen(title); // append to end of string
+            if (CPU_CycleAutoAdjust && menu.hidecycles && !menu.showrt)
+                sprintf(p,"%d%%", (int)internal_cycles);
+            else
+                sprintf(p,"%d cycles/ms", (int)internal_cycles);
+        } else
+            sprintf(title, "%s", dosbox_name);
+
+        if (!menu.hidecycles) {
             char *p = title + strlen(title); // append to end of string
 
-            sprintf(p,": %s - ", what);
+            sprintf(p,", FPS %2d",(int)frames);
         }
 
-        char *p = title + strlen(title); // append to end of string
-        if (CPU_CycleAutoAdjust && menu.hidecycles && !menu.showrt)
-            sprintf(p,"%d%%", (int)internal_cycles);
-        else
-            sprintf(p,"%d cycles/ms", (int)internal_cycles);
-    } else
-        sprintf(title, "%s%s%s", dosbox_title.c_str(), dosbox_title.empty() ? "" : " - ", dosbox_name);
+        if (menu.showrt) {
+            char *p = title + strlen(title); // append to end of string
 
-    if (!menu.hidecycles) {
-        char *p = title + strlen(title); // append to end of string
+            sprintf(p,", %2d%%/RT",(int)floor((rtdelta / 10) + 0.5));
+        }
 
-        sprintf(p,", FPS %2d",(int)frames);
-    }
+        if (titlebar != NULL && *titlebar != 0) {
+            char *p = title + strlen(title); // append to end of string
 
-    if (menu.showrt) {
-        char *p = title + strlen(title); // append to end of string
+            sprintf(p,": %s",titlebar);
+        }
 
-        sprintf(p,", %2d%%/RT",(int)floor((rtdelta / 10) + 0.5));
-    }
+        if (sdl.mouse.locked) {
+            std::string get_mapper_shortcut(const char *name);
+            std::string key=get_mapper_shortcut("capmouse");
+            strcat(title, key.size()?(" ["+key+" releases mouse]").c_str():" [mouse locked]");
+        }
 
-    if (titlebar != NULL && *titlebar != 0) {
-        char *p = title + strlen(title); // append to end of string
-
-        sprintf(p,": %s",titlebar);
-    }
-
-    if (sdl.mouse.locked) {
-        std::string get_mapper_shortcut(const char *name);
-        std::string key=get_mapper_shortcut("capmouse");
-        strcat(title, key.size()?(" ["+key+" releases mouse]").c_str():" [mouse locked]");
-    }
-
-    if (paused) strcat(title," PAUSED");
-    if (ticksLocked) strcat(title, " TURBO");
+        if (paused) strcat(title," PAUSED");
+        if (ticksLocked) strcat(title, " TURBO");
 #if C_DEBUG
-    if (IsDebuggerActive()) strcat(title," DEBUGGER");
+        if (IsDebuggerActive()) strcat(title," DEBUGGER");
 #endif
+    }
 #if defined(C_SDL2)
     SDL_SetWindowTitle(sdl.window,title);
 #else
@@ -4338,7 +4345,7 @@ static void GUI_StartUp() {
 #endif
 
 #if defined(C_SDL2)
-    SDL_SetWindowTitle(sdl.window,"DOSBox-X");
+    GFX_SetTitle(-1,-1,-1,false);
     if (posx >= 0 && posy >= 0) {
 #if WIN32
         HWND hwnd = GetHWND();
@@ -4377,7 +4384,7 @@ static void GUI_StartUp() {
 #endif
     }
 #else
-    SDL_WM_SetCaption("DOSBox-X",VERSION);
+    GFX_SetTitle(-1,-1,-1,false);
 #endif
 
 #if defined(C_SDL2)
